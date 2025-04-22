@@ -69,6 +69,17 @@ resume_data$end_dates_parsed <- lapply(resume_data$end_dates_parsed, function(da
 })
 resume_data$end_dates_parsed
 
+# Drop rows with any invalid (too old) start dates
+valid_entries <- sapply(resume_data$start_dates_parsed, function(start_list) {
+  all(sapply(start_list, function(d) {
+    !is.na(d) && as.numeric(d) > as.numeric(as.Date("1900-01-01"))
+  }))
+})
+
+resume_data <- resume_data[valid_entries, ]
+
+
+
 # Calculate experience in years
 safe_as_date <- function(x) {
   if (inherits(x, "Date")) return(x)
