@@ -9,7 +9,7 @@ library(markovchain)
 # --- Data Loading and Initial Cleaning ---
 
 # Load the dataset
-resume_data <- read.csv("D:\\Projects with Git\\AI-Job-Matching\\resume_data.csv", stringsAsFactors = FALSE)
+resume_data <- read.csv("C:\\Users\\HP\\Desktop\\PROB project\\AI-Job-Matching\\resume_data.csv", stringsAsFactors = FALSE)
 head(resume_data)
 
 # Clean column names (remove special characters like hidden BOM)
@@ -636,9 +636,42 @@ top_candidates <- resume_data %>%
 # Print top candidates
 print(top_candidates)
 
+# --- Estimating Hiring Probability using Bayes Theorem ---
 
+# Define the function to calculate hiring probability
+calculate_hiring_probability <- function(experience_years, academic_level) {
+  # Mock conditional probabilities (based on assumptions or historical data if available)
+  p_hired <- 0.5  # Prior probability of getting hired
+  
+  # Conditional probability of experience given hired
+  p_exp_given_hired <- ifelse(experience_years >= 5, 0.8,
+                              ifelse(experience_years >= 2, 0.6, 0.3))
+  
+  # Conditional probability of education given hired
+  p_edu_given_hired <- ifelse(academic_level >= 5, 0.9,
+                              ifelse(academic_level >= 4, 0.7,
+                                     ifelse(academic_level >= 3, 0.5, 0.2)))
+  
+  # Naive Bayes formula: P(H|E) ∝ P(E|H) * P(H)
+  numerator <- p_exp_given_hired * p_edu_given_hired * p_hired
+  denominator <- numerator + ((1 - p_exp_given_hired) * (1 - p_edu_given_hired) * (1 - p_hired))
+  
+  hiring_probability <- numerator / denominator
+  return(hiring_probability)
+}
+
+# Apply the function to the cleaned resume data
+resume_data$hiring_probability <- mapply(
+  calculate_hiring_probability,
+  resume_data$total_experience_years,
+  resume_data$academic_level
+)
+
+# Display hiring probability with relevant columns
+print(resume_data[, c("total_experience_years", "academic_level", "hiring_probability")])
 
 # --- Data Export ---
 
 # Export the final ranked data to an RDS file
-saveRDS(resume_data, "D:\\Projects with Git\\AI-Job-Matching\\resume_ranking_data.rds")
+saveRDS(resume_data, "C:\\Users\\HP\\Desktop\\PROB project\\AI-Job-Matching\\resume_ranking_data.rds")
+
