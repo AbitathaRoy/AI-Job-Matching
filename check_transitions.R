@@ -59,3 +59,4 @@ transitions %>%
   group_by(candidate_id) %>%
   summarise(num_transitions = n()) %>%
   summary()
+

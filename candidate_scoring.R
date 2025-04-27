@@ -640,7 +640,7 @@ calculate_hiring_probability <- function(experience_years, academic_level) {
                               ifelse(academic_level >= 4, 0.7,
                                      ifelse(academic_level >= 3, 0.5, 0.2)))
   
-  # Naive Bayes formula: P(H|E) ∝ P(E|H) * P(H)
+  # Naive Bayes formula: P(H|E) ∝ P(E|H) * P(H) - this is an approx. due to lack of info.
   numerator <- p_exp_given_hired * p_edu_given_hired * p_hired
   denominator <- numerator + ((1 - p_exp_given_hired) * (1 - p_edu_given_hired) * (1 - p_hired))
   
