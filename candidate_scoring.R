@@ -9,7 +9,7 @@ library(markovchain)
 # --- Data Loading and Initial Cleaning ---
 
 # Load the dataset
-resume_data <- read.csv("C:\\Users\\HP\\Desktop\\PROB project\\AI-Job-Matching\\resume_data.csv", stringsAsFactors = FALSE)
+resume_data <- read.csv(".\\resume_data.csv", stringsAsFactors = FALSE)
 head(resume_data)
 
 # Clean column names (remove special characters like hidden BOM)
@@ -124,15 +124,6 @@ resume_data$total_experience_years <- sapply(resume_data$experience_years, funct
 
 
 # --- Education Level Mapping ---
-
-# Clean degree column and assign numeric education levels
-# resume_data$education_level <- tolower(resume_data$degree_names)
-# resume_data$education_numeric <- case_when(
-#   str_detect(resume_data$education_level, "phd") ~ 4,
-#   str_detect(resume_data$education_level, "master|mba|msc") ~ 3,
-#   str_detect(resume_data$education_level, "bachelor|btech|b\\.sc|bca") ~ 2,
-#   TRUE ~ 1
-# )
 
 head(resume_data$degree_name, 15)
 
@@ -289,20 +280,6 @@ valid_rows <- mapply(function(range, exp) {
 resume_data <- resume_data[valid_rows & resume_data$academic_level >= resume_data$required_academic_level, ]
 
 
-
-
-# --- Naive Hiring Simulation ---
-
-# # Define thresholds for experience and education (using 70th percentile)
-# threshold_exp <- quantile(resume_data$experience_years, 0.7, na.rm = TRUE)
-# threshold_edu <- quantile(resume_data$academic_level, 0.7, na.rm = TRUE)
-# 
-# # Simulate hiring outcome based on thresholds
-# resume_data$hired <- ifelse(
-#   resume_data$experience_years >= threshold_exp & resume_data$academic_level >= threshold_edu,
-#   1, 0
-# )
-
 # --- Markov Chain Modeling for Career Transitions ---
 
 # Assign candidate IDs
@@ -325,21 +302,6 @@ parse_positions <- function(pos_string) {
 }
 resume_data$positions_parsed <- lapply(resume_data$positions, parse_positions)
 
-
-# # Prepare data for Markov chain analysis
-# transitions <- resume_data %>%
-#   filter(!is.na(job_position_name)) %>%
-#   arrange(candidate_id, start_date) %>%
-#   group_by(candidate_id) %>%
-#   mutate(next_role = lead(job_position_name)) %>%
-#   ungroup() %>%
-#   filter(!is.na(next_role))
-# 
-# # Create the transition matrix
-# trans_matrix <- table(transitions$job_position_name, transitions$next_role)
-# 
-# # Create the Markov chain object
-# mc <- new("markovchain", transitionMatrix = prop.table(trans_matrix, 1))
 
 library(dplyr)
 library(tidyr)
@@ -673,5 +635,5 @@ print(resume_data[, c("total_experience_years", "academic_level", "hiring_probab
 # --- Data Export ---
 
 # Export the final ranked data to an RDS file
-saveRDS(resume_data, "C:\\Users\\HP\\Desktop\\PROB project\\AI-Job-Matching\\resume_ranking_data.rds")
+saveRDS(resume_data, ".\\resume_ranking_data.rds")
 
