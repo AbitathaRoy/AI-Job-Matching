@@ -476,17 +476,43 @@ print(prob_matrix[1:5, 1:5])
 total_incoming_prob <- colSums(prob_matrix)
 lucrative_jobs <- sort(total_incoming_prob, decreasing = TRUE)
 cat("Most lucrative jobs:\n")
-print(lucrative_jobs[1:10])  # Top 10 lucrative jobs
+temp <- 20
+print(lucrative_jobs[1:temp])  # Top temp lucrative jobs
 cat("\nLeast lucrative jobs:\n")
-print(lucrative_jobs[(length(lucrative_jobs)-9):length(lucrative_jobs)])  # Bottom 10 lucrative jobs
+print(lucrative_jobs[(length(lucrative_jobs)-(temp-1)):length(lucrative_jobs)])  # Bottom 10 lucrative jobs
 
 # 2 - Job Stability - Self Transitions -
 
-# Identify the jobs with the highest and lowest self-transition probabilities
-highest_self_transitions <- sort(self_transition_prob, decreasing = TRUE)
-lowest_self_transitions <- sort(self_transition_prob, decreasing = FALSE)
+self_transition_prob <- function(prob_matrix) {
+  # Extract the diagonal elements (self-transition probabilities)
+  diag_probs <- diag(prob_matrix)
+  
+  # Get row and column names (labels)
+  row_labels <- rownames(prob_matrix)
+  col_labels <- colnames(prob_matrix)
+  
+  names(diag_probs) <- row_labels
+  
+  return(diag_probs)
+}
 
-head(highest_self_transitions, 60)
+# Calculate the self-transition probabilities
+self_transitions <- self_transition_prob(prob_matrix)
+
+# Identify the jobs with the highest and lowest self-transition probabilities
+temp <- 10    # how many to show?
+highest_self_transitions <- head(sort(self_transitions, decreasing = TRUE), n = temp)
+lowest_self_transitions <- head(sort(self_transitions, decreasing = FALSE), n = temp)
+
+# Print the results
+cat("Self-Transition Probabilities:\n")
+print(self_transitions)
+
+cat("\nHighest Self-Transition Probabilities:\n")
+print(highest_self_transitions)
+
+cat("\nLowest Self-Transition Probabilities:\n")
+print(lowest_self_transitions)
 
 # 3 - Transitions between Specific Roles -
 
