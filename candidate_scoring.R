@@ -9,7 +9,7 @@ library(markovchain)
 # --- Data Loading and Initial Cleaning ---
 
 # Load the dataset
-resume_data <- read.csv(".\\resume_data.csv", stringsAsFactors = FALSE)
+resume_data <- read.csv("D:\\AI-Job-Matching\\resume_data.csv", stringsAsFactors = FALSE)
 head(resume_data)
 
 # Clean column names (remove special characters like hidden BOM)
@@ -124,6 +124,7 @@ resume_data$total_experience_years <- sapply(resume_data$experience_years, funct
 
 
 # --- Education Level Mapping ---
+
 
 head(resume_data$degree_name, 15)
 
@@ -476,10 +477,9 @@ print(prob_matrix[1:5, 1:5])
 total_incoming_prob <- colSums(prob_matrix)
 lucrative_jobs <- sort(total_incoming_prob, decreasing = TRUE)
 cat("Most lucrative jobs:\n")
-temp <- 20
-print(lucrative_jobs[1:temp])  # Top temp lucrative jobs
+print(lucrative_jobs[1:10])  # Top 10 lucrative jobs
 cat("\nLeast lucrative jobs:\n")
-print(lucrative_jobs[(length(lucrative_jobs)-(temp-1)):length(lucrative_jobs)])  # Bottom 10 lucrative jobs
+print(lucrative_jobs[(length(lucrative_jobs)-9):length(lucrative_jobs)])  # Bottom 10 lucrative jobs
 
 # 2 - Job Stability - Self Transitions -
 
@@ -547,8 +547,65 @@ ggplot(prob_matrix_melted, aes(x = Var1, y = Var2, fill = value)) +
   ylab("To Job") +
   ggtitle("Transition Probability Matrix Heatmap")
 
-# Network Diagram
 
+# Select Top 10 Common Roles (or any number you want)
+top_roles <- names(sort(rowSums(prob_matrix), decreasing = TRUE))[1:10]
+
+# Subset your transition matrix
+prob_matrix_subset <- prob_matrix[top_roles, top_roles]
+
+
+# Melt the smaller matrix
+prob_matrix_melted <- reshape2::melt(prob_matrix_subset)
+
+# Plot the Heatmap again
+library(ggplot2)
+
+ggplot(prob_matrix_melted, aes(x = Var1, y = Var2, fill = value)) + 
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "blue") +
+  theme_minimal() +
+  xlab("From Job") + 
+  ylab("To Job") +
+  ggtitle("Transition Probability Matrix (Top 10 Roles)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+
+
+# To detect Promotions :
+# Define promotion keywords
+promotion_keywords <- c("Senior", "Lead", "Principal", "Manager", "Director", "Head", "Chief", "VP")
+
+# Function to check if a title indicates a promotion
+is_promotion <- function(from_title, to_title) {
+  from_promotion <- any(str_detect(from_title, promotion_keywords))
+  to_promotion <- any(str_detect(to_title, promotion_keywords))
+  
+  # Promotion occurs when moving from non-promotion to promotion title
+  return(!from_promotion & to_promotion)
+}
+
+library(dplyr)
+
+# Find Promotions
+promotions <- transitions %>%
+  filter(!is.na(current_position) & !is.na(next_position)) %>%
+  filter(mapply(is_promotion, current_position, next_position))
+
+# View promotions
+print(promotions)
+
+promotion_counts <- promotions %>%
+  group_by(current_position) %>%
+  summarise(Promotions = n()) %>%
+  arrange(desc(Promotions))
+
+print(promotion_counts)
+
+
+# Network Diagram
 library(igraph)
 
 # Create an igraph object from the transition matrix
@@ -564,8 +621,60 @@ plot(graph, vertex.size = 5, vertex.label.cex = 0.7, edge.arrow.size = 0.5)
 dist_matrix <- dist(prob_matrix)
 hc <- hclust(dist_matrix)
 
+
+
+# plotting only top 10:
+library(igraph)
+
+# Top 10 most common roles
+top_roles <- names(sort(rowSums(prob_matrix), decreasing = TRUE))[1:10]
+
+# Filter transitions
+filtered_transitions <- transitions %>%
+  filter(current_position %in% top_roles & next_position %in% top_roles)
+
+# Create igraph
+g <- graph_from_data_frame(filtered_transitions, directed = TRUE)
+
+# Plot
+plot(g, vertex.size = 10, vertex.label.cex = 0.8, edge.arrow.size = 0.5,
+     main = "Career Transition Network (Top 10 Roles)")
+
+
+# PLotting only promotions :
+# Use promotions data you found earlier
+promotion_counts <- promotions %>%
+  group_by(current_position, next_position) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  arrange(desc(count))
+
+# Take Top 20 most common promotions
+top_promotions <- promotion_counts %>%
+  slice_head(n = 10)
+
+g <- graph_from_data_frame(top_promotions, directed = TRUE)
+
+plot(g, vertex.size = 15, vertex.label.cex = 0.8, edge.arrow.size = 0.5,
+     main = "Promotion Network Only")
+
 # Plot the dendrogram
+
 plot(hc)
+
+# visualising only top roles in dendogram 
+# Top 30 roles
+top_roles <- names(sort(rowSums(prob_matrix), decreasing = TRUE))[1:30]
+
+# Subset transition matrix
+prob_matrix_top <- prob_matrix[top_roles, top_roles]
+
+# Recompute distance and cluster
+dist_matrix_top <- dist(prob_matrix_top)
+hc_top <- hclust(dist_matrix_top, method = "complete")
+
+# Plot
+plot(as.dendrogram(hc_top), main="Top 30 Career Roles")
+
 
 # 7 - Markov Chain Analysis - Career Transition over n steps
 
@@ -607,7 +716,7 @@ resume_data <- resume_data %>%
   arrange(desc(z_score))
 
 # Set n for top candidates to display
-n <- 10  # Change as needed
+n <- 50  # Change as needed
 
 # Filter transitions where next_position is NA
 filtered_transitions <- transitions %>%
@@ -623,13 +732,15 @@ top_candidates <- resume_data %>%
 
 # Print top candidates
 print(top_candidates)
+resume_data %>%
+  filter(candidate_id <= 50) %>%
+  select(candidate_id, num_skills, total_experience_years, academic_level, composite_score)
 
 # --- Estimating Hiring Probability using Bayes Theorem ---
 
 # Define the function to calculate hiring probability
-calculate_hiring_probability <- function(experience_years, academic_level) {
-  # Mock conditional probabilities (based on assumptions or historical data if available)
-  p_hired <- 0.5  # Prior probability of getting hired
+calculate_hiring_probability <- function(experience_years, academic_level, num_skills) {
+  p_hired <- 0.4  # Prior probability of getting hired
   
   # Conditional probability of experience given hired
   p_exp_given_hired <- ifelse(experience_years >= 5, 0.8,
@@ -640,26 +751,33 @@ calculate_hiring_probability <- function(experience_years, academic_level) {
                               ifelse(academic_level >= 4, 0.7,
                                      ifelse(academic_level >= 3, 0.5, 0.2)))
   
-  # Naive Bayes formula: P(H|E) ∝ P(E|H) * P(H) - this is an approx. due to lack of info.
-  numerator <- p_exp_given_hired * p_edu_given_hired * p_hired
-  denominator <- numerator + ((1 - p_exp_given_hired) * (1 - p_edu_given_hired) * (1 - p_hired))
+  # Conditional probability of skills given hired
+  p_skills_given_hired <- ifelse(num_skills >= 10, 0.8,
+                                 ifelse(num_skills >= 5, 0.6, 0.4))
+  
+  # Updated Naive Bayes numerator (multiplying all conditionals)
+  numerator <- p_exp_given_hired * p_edu_given_hired * p_skills_given_hired * p_hired
+  
+  # Updated denominator (for normalization)
+  denominator <- numerator + ((1 - p_exp_given_hired) * (1 - p_edu_given_hired) * (1 - p_skills_given_hired) * (1 - p_hired))
   
   hiring_probability <- numerator / denominator
   return(hiring_probability)
 }
 
-# Apply the function to the cleaned resume data
+# Now apply it with three arguments
 resume_data$hiring_probability <- mapply(
   calculate_hiring_probability,
   resume_data$total_experience_years,
-  resume_data$academic_level
+  resume_data$academic_level,
+  resume_data$num_skills  # <- add this
 )
 
-# Display hiring probability with relevant columns
-print(resume_data[, c("total_experience_years", "academic_level", "hiring_probability")])
+# Display updated probabilities
+print(resume_data[, c("total_experience_years", "academic_level", "num_skills", "hiring_probability")])
 
 # --- Data Export ---
 
 # Export the final ranked data to an RDS file
-saveRDS(resume_data, ".\\resume_ranking_data.rds")
+saveRDS(resume_data, "D:\\AI-Job-Matching\\resume_ranking_data.rds")
 
