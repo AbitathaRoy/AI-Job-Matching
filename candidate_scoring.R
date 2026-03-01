@@ -774,7 +774,7 @@ resume_data$hiring_probability <- mapply(
 )
 
 # Display updated probabilities
-print(head(resume_data[, c("total_experience_years", "academic_level", "num_skills", "hiring_probability")], 35))
+print(head(unique(resume_data[, c("total_experience_years", "academic_level", "num_skills", "hiring_probability")]), 100))
 
 unique(head(resume_data[, c("total_experience_years", "academic_level", "num_skills")], 100))
 
