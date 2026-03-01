@@ -9,7 +9,7 @@ library(markovchain)
 # --- Data Loading and Initial Cleaning ---
 
 # Load the dataset
-resume_data <- read.csv("D:\\Projects with Git\\AI-Job-Matching\\resume_data.csv", stringsAsFactors = FALSE)
+resume_data <- read.csv("D:\\AI-Job-Matching\\resume_data.csv", stringsAsFactors = FALSE)
 head(resume_data)
 
 # Clean column names (remove special characters like hidden BOM)
@@ -777,9 +777,10 @@ resume_data$hiring_probability <- mapply(
 print(head(unique(resume_data[, c("total_experience_years", "academic_level", "num_skills", "hiring_probability")]), 100))
 
 unique(head(resume_data[, c("total_experience_years", "academic_level", "num_skills")], 100))
+print(resume_data[, c("total_experience_years", "academic_level", "num_skills", "hiring_probability")])
 
 # --- Data Export ---
 
 # Export the final ranked data to an RDS file
-saveRDS(resume_data, "D:\\Projects with Git\\AI-Job-Matching\\resume_ranking_data.rds")
+saveRDS(resume_data, "D:\\AI-Job-Matching\\resume_ranking_data.rds")
 
