@@ -17,7 +17,7 @@ library(httr2)
 library(jsonlite)
 
 # ---- SETUP ----
-api_key <- "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"
+api_key <- "API_KEY"
 endpoint <- "https://api.groq.com/openai/v1/chat/completions"
 
 
